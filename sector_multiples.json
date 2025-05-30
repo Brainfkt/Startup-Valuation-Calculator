@@ -1,0 +1,286 @@
+{
+  "multiples_data": {
+    "Technologie": {
+      "Revenue": {
+        "median": 6.5,
+        "p25": 4.2,
+        "p75": 9.8,
+        "description": "Entreprises technologiques généralistes"
+      },
+      "EBITDA": {
+        "median": 15.2,
+        "p25": 12.1,
+        "p75": 20.3,
+        "description": "Multiple EBITDA pour le secteur tech"
+      }
+    },
+    "SaaS": {
+      "Revenue": {
+        "median": 8.2,
+        "p25": 5.8,
+        "p75": 12.4,
+        "description": "Software as a Service avec récurrence"
+      },
+      "EBITDA": {
+        "median": 18.5,
+        "p25": 14.2,
+        "p75": 24.8,
+        "description": "SaaS avec marges élevées"
+      }
+    },
+    "E-commerce": {
+      "Revenue": {
+        "median": 3.1,
+        "p25": 2.2,
+        "p75": 4.8,
+        "description": "Commerce électronique et marketplaces"
+      },
+      "EBITDA": {
+        "median": 12.8,
+        "p25": 9.5,
+        "p75": 16.2,
+        "description": "E-commerce avec logistique optimisée"
+      }
+    },
+    "Fintech": {
+      "Revenue": {
+        "median": 7.8,
+        "p25": 5.1,
+        "p75": 11.2,
+        "description": "Technologies financières et paiements"
+      },
+      "EBITDA": {
+        "median": 16.9,
+        "p25": 13.4,
+        "p75": 22.1,
+        "description": "Fintech avec modèles récurrents"
+      }
+    },
+    "Biotech": {
+      "Revenue": {
+        "median": 12.4,
+        "p25": 8.9,
+        "p75": 18.7,
+        "description": "Biotechnologies et pharma innovation"
+      },
+      "EBITDA": {
+        "median": 25.6,
+        "p25": 18.3,
+        "p75": 35.2,
+        "description": "Biotech avec pipeline validé"
+      }
+    },
+    "Cleantech": {
+      "Revenue": {
+        "median": 4.7,
+        "p25": 3.2,
+        "p75": 7.1,
+        "description": "Technologies propres et énergies renouvelables"
+      },
+      "EBITDA": {
+        "median": 13.1,
+        "p25": 10.2,
+        "p75": 17.8,
+        "description": "Cleantech avec contrats long terme"
+      }
+    },
+    "Marketplace": {
+      "Revenue": {
+        "median": 5.3,
+        "p25": 3.8,
+        "p75": 8.2,
+        "description": "Plateformes marketplace avec effet réseau"
+      },
+      "EBITDA": {
+        "median": 14.7,
+        "p25": 11.1,
+        "p75": 19.5,
+        "description": "Marketplace avec monétisation établie"
+      }
+    },
+    "Media": {
+      "Revenue": {
+        "median": 2.8,
+        "p25": 1.9,
+        "p75": 4.2,
+        "description": "Médias digitaux et contenu"
+      },
+      "EBITDA": {
+        "median": 9.4,
+        "p25": 7.1,
+        "p75": 12.8,
+        "description": "Média avec audience monétisée"
+      }
+    },
+    "Manufacturing": {
+      "Revenue": {
+        "median": 1.9,
+        "p25": 1.3,
+        "p75": 2.8,
+        "description": "Industries manufacturières traditionnelles"
+      },
+      "EBITDA": {
+        "median": 8.2,
+        "p25": 6.5,
+        "p75": 11.1,
+        "description": "Manufacturing avec optimisation processus"
+      }
+    },
+    "Retail": {
+      "Revenue": {
+        "median": 1.4,
+        "p25": 0.9,
+        "p75": 2.1,
+        "description": "Commerce de détail et distribution"
+      },
+      "EBITDA": {
+        "median": 6.8,
+        "p25": 5.2,
+        "p75": 9.3,
+        "description": "Retail avec optimisation supply chain"
+      }
+    }
+  },
+  "risk_factors_reference": {
+    "management": {
+      "name": "Risque de gestion",
+      "description": "Expérience et compétences de l'équipe dirigeante",
+      "factors": {
+        "-2": "Équipe inexpérimentée, management défaillant",
+        "-1": "Équipe avec lacunes, expérience limitée",
+        "0": "Équipe correcte, expérience standard",
+        "1": "Équipe expérimentée, leadership solide",
+        "2": "Équipe exceptionnelle, track record prouvé"
+      }
+    },
+    "stage": {
+      "name": "Stade de développement",
+      "description": "Maturité du produit et du business model",
+      "factors": {
+        "-2": "Concept uniquement, pas de prototype",
+        "-1": "Prototype basique, validation limitée",
+        "0": "MVP fonctionnel, quelques clients",
+        "1": "Produit validé, traction démontrée",
+        "2": "Produit mature, croissance établie"
+      }
+    },
+    "competition": {
+      "name": "Risque concurrentiel",
+      "description": "Intensité concurrentielle et positionnement",
+      "factors": {
+        "-2": "Marché saturé, nombreux concurrents forts",
+        "-1": "Concurrence significative, différenciation faible",
+        "0": "Concurrence modérée, positionnement correct",
+        "1": "Avantage concurrentiel, barrières à l'entrée",
+        "2": "Position dominante, monopole temporaire"
+      }
+    }
+  },
+  "berkus_criteria": {
+    "concept": {
+      "name": "Solidité du concept/idée",
+      "max_value": 500000,
+      "description": "Qualité et viabilité de l'idée de base"
+    },
+    "prototype": {
+      "name": "Prototype/MVP fonctionnel",
+      "max_value": 500000,
+      "description": "Existence et qualité du prototype ou MVP"
+    },
+    "team": {
+      "name": "Qualité de l'équipe dirigeante",
+      "max_value": 500000,
+      "description": "Expérience et compétences de l'équipe"
+    },
+    "strategic_relationships": {
+      "name": "Relations stratégiques",
+      "max_value": 500000,
+      "description": "Partenariats et réseau stratégique"
+    },
+    "product_rollout": {
+      "name": "Lancement produit/premiers clients",
+      "max_value": 500000,
+      "description": "Traction commerciale et adoption initiale"
+    }
+  },
+  "industry_benchmarks": {
+    "growth_rates": {
+      "SaaS": {
+        "early_stage": 0.15,
+        "growth_stage": 0.08,
+        "mature_stage": 0.04
+      },
+      "E-commerce": {
+        "early_stage": 0.12,
+        "growth_stage": 0.06,
+        "mature_stage": 0.03
+      },
+      "Fintech": {
+        "early_stage": 0.18,
+        "growth_stage": 0.10,
+        "mature_stage": 0.05
+      }
+    },
+    "discount_rates": {
+      "early_stage": 0.25,
+      "growth_stage": 0.15,
+      "mature_stage": 0.12
+    },
+    "churn_rates": {
+      "SaaS": {
+        "monthly": 0.05,
+        "annual": 0.15
+      },
+      "E-commerce": {
+        "monthly": 0.08,
+        "annual": 0.25
+      },
+      "Subscription": {
+        "monthly": 0.06,
+        "annual": 0.18
+      }
+    }
+  },
+  "funding_stages": {
+    "pre_seed": {
+      "typical_valuation_range": [100000, 1000000],
+      "typical_investment": [50000, 250000],
+      "key_metrics": ["concept", "team", "market_size"]
+    },
+    "seed": {
+      "typical_valuation_range": [1000000, 5000000],
+      "typical_investment": [250000, 1500000],
+      "key_metrics": ["mvp", "early_traction", "product_market_fit"]
+    },
+    "series_a": {
+      "typical_valuation_range": [5000000, 20000000],
+      "typical_investment": [2000000, 8000000],
+      "key_metrics": ["revenue_growth", "unit_economics", "scalability"]
+    },
+    "series_b": {
+      "typical_valuation_range": [20000000, 80000000],
+      "typical_investment": [8000000, 25000000],
+      "key_metrics": ["market_expansion", "profitability_path", "competitive_moat"]
+    }
+  },
+  "exit_multiples": {
+    "IPO": {
+      "SaaS": 12.0,
+      "E-commerce": 4.5,
+      "Fintech": 8.5,
+      "Biotech": 15.0
+    },
+    "Strategic_Acquisition": {
+      "SaaS": 8.0,
+      "E-commerce": 3.2,
+      "Fintech": 6.8,
+      "Biotech": 12.0
+    },
+    "Financial_Acquisition": {
+      "SaaS": 6.5,
+      "E-commerce": 2.8,
+      "Fintech": 5.5,
+      "Biotech": 10.0
+    }
+  }
+}
