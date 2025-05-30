@@ -563,4 +563,363 @@ def main():
             # Scorecard Method
             if methods["Scorecard"]:
                 st.markdown('<div class="method-card">', unsafe_allow_html=True)
-                st.
+                st.subheader("📝 Scorecard Method")
+                
+                score_col1, score_col2 = st.columns(2)
+                
+                with score_col1:
+                    base_valuation = st.number_input("Valorisation de base (€)", min_value=0, value=1000000, key="score_base")
+                    st.write("**Évaluation des critères (0-5)**")
+                    
+                    criteria_scores = {}
+                    criteria_scores["team"] = st.slider("👥 Équipe dirigeante", 0, 5, 3, key="score_team")
+                    criteria_scores["product"] = st.slider("🚀 Produit/Service", 0, 5, 3, key="score_product")
+                    criteria_scores["market"] = st.slider("🎯 Marché/Opportunité", 0, 5, 3, key="score_market")
+                
+                with score_col2:
+                    st.write("**Pondérations (%)**")
+                    weights = {}
+                    weights["team"] = st.slider("👥 Équipe", 10, 40, 25, key="weight_team") / 100
+                    weights["product"] = st.slider("🚀 Produit", 10, 30, 20, key="weight_product") / 100
+                    weights["market"] = st.slider("🎯 Marché", 10, 30, 20, key="weight_market") / 100
+                    weights["competition"] = st.slider("⚔️ Concurrence", 5, 25, 15, key="weight_competition") / 100
+                    weights["financial"] = st.slider("💰 Finances", 5, 20, 10, key="weight_financial") / 100
+                    weights["legal"] = st.slider("⚖️ Légal", 5, 15, 10, key="weight_legal") / 100
+                    
+                    criteria_scores["competition"] = st.slider("⚔️ Position concurrentielle", 0, 5, 3, key="score_competition")
+                    criteria_scores["financial"] = st.slider("💰 Situation financière", 0, 5, 3, key="score_financial")
+                    criteria_scores["legal"] = st.slider("⚖️ Aspects légaux", 0, 5, 3, key="score_legal")
+                
+                # Vérification que les poids totalisent 100%
+                total_weight = sum(weights.values())
+                if abs(total_weight - 1.0) > 0.01:
+                    st.warning(f"⚠️ Les pondérations totalisent {total_weight*100:.1f}% au lieu de 100%")
+                
+                if st.button("Calculer Scorecard", key="calc_scorecard"):
+                    scorecard_result = ValuationCalculator.scorecard_valuation(base_valuation, criteria_scores, weights)
+                    valuations["Scorecard"] = scorecard_result["valuation"]
+                    detailed_results["Scorecard"] = scorecard_result
+                    
+                    st.success(f"**Valorisation Scorecard: {scorecard_result['valuation']:,.0f} €**")
+                    st.info(f"Facteur d'ajustement: {scorecard_result['adjustment_factor']:.2f}")
+                    
+                    # Graphique des contributions
+                    criteria_names = []
+                    contributions = []
+                    for criterion, analysis in scorecard_result['criteria_analysis'].items():
+                        criteria_names.append(analysis.get('name', criterion))
+                        contributions.append(analysis['contribution'])
+                    
+                    fig_scorecard = go.Figure(data=[
+                        go.Bar(x=criteria_names, y=contributions, marker_color='lightgreen')
+                    ])
+                    fig_scorecard.update_layout(
+                        title="Contribution de chaque critère",
+                        xaxis_title="Critères",
+                        yaxis_title="Contribution à l'ajustement"
+                    )
+                    st.plotly_chart(fig_scorecard, use_container_width=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Berkus Method
+            if methods["Berkus"]:
+                st.markdown('<div class="method-card">', unsafe_allow_html=True)
+                st.subheader("🎯 Berkus Method")
+                st.info("Méthode spécialement conçue pour les startups pré-revenus. Maximum 500k€ par critère.")
+                
+                berkus_col1, berkus_col2 = st.columns(2)
+                
+                with berkus_col1:
+                    berkus_scores = {}
+                    berkus_scores["concept"] = st.slider("💡 Solidité du concept", 0, 5, 3, key="berkus_concept")
+                    berkus_scores["prototype"] = st.slider("🔧 Prototype/MVP", 0, 5, 3, key="berkus_prototype")
+                    berkus_scores["team"] = st.slider("👨‍💼 Équipe dirigeante", 0, 5, 3, key="berkus_team")
+                
+                with berkus_col2:
+                    berkus_scores["strategic_relationships"] = st.slider("🤝 Relations stratégiques", 0, 5, 3, key="berkus_relations")
+                    berkus_scores["product_rollout"] = st.slider("📊 Lancement produit", 0, 5, 3, key="berkus_rollout")
+                
+                if st.button("Calculer Berkus", key="calc_berkus"):
+                    berkus_result = ValuationCalculator.berkus_valuation(berkus_scores)
+                    valuations["Berkus"] = berkus_result["valuation"]
+                    detailed_results["Berkus"] = berkus_result
+                    
+                    st.success(f"**Valorisation Berkus: {berkus_result['valuation']:,.0f} €**")
+                    st.info(f"Potentiel maximum: {berkus_result['max_possible']:,.0f} €")
+                    
+                    # Graphique en barres pour Berkus
+                    criteria_names = [data['name'] for data in berkus_result['breakdown'].values()]
+                    criteria_values = [data['value'] for data in berkus_result['breakdown'].values()]
+                    
+                    fig_berkus = go.Figure(data=[
+                        go.Bar(x=criteria_names, y=criteria_values, marker_color='orange')
+                    ])
+                    fig_berkus.update_layout(
+                        title="Répartition de la valorisation Berkus",
+                        xaxis_title="Critères",
+                        yaxis_title="Valeur (€)"
+                    )
+                    st.plotly_chart(fig_berkus, use_container_width=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Risk Factor Summation Method
+            if methods["Risk Factor"]:
+                st.markdown('<div class="method-card">', unsafe_allow_html=True)
+                st.subheader("⚠️ Risk Factor Summation")
+                
+                risk_base_val = st.number_input("Valorisation de base (€)", min_value=0, value=1000000, key="risk_base")
+                
+                st.write("**Évaluation des facteurs de risque (-2: Très risqué, 0: Neutre, +2: Très favorable)**")
+                
+                risk_col1, risk_col2 = st.columns(2)
+                
+                with risk_col1:
+                    risk_factors = {}
+                    risk_factors["management"] = st.slider("👨‍💼 Risque de gestion", -2, 2, 0, key="risk_mgmt")
+                    risk_factors["stage"] = st.slider("🚀 Stade de développement", -2, 2, 0, key="risk_stage")
+                    risk_factors["legislation"] = st.slider("⚖️ Risque législatif", -2, 2, 0, key="risk_legal")
+                    risk_factors["manufacturing"] = st.slider("🏭 Risque de production", -2, 2, 0, key="risk_manuf")
+                    risk_factors["sales"] = st.slider("💼 Risque commercial", -2, 2, 0, key="risk_sales")
+                    risk_factors["funding"] = st.slider("💰 Risque de financement", -2, 2, 0, key="risk_funding")
+                
+                with risk_col2:
+                    risk_factors["competition"] = st.slider("⚔️ Risque concurrentiel", -2, 2, 0, key="risk_comp")
+                    risk_factors["technology"] = st.slider("💻 Risque technologique", -2, 2, 0, key="risk_tech")
+                    risk_factors["litigation"] = st.slider("⚖️ Risque juridique", -2, 2, 0, key="risk_litigation")
+                    risk_factors["international"] = st.slider("🌍 Risque international", -2, 2, 0, key="risk_intl")
+                    risk_factors["reputation"] = st.slider("🏆 Risque de réputation", -2, 2, 0, key="risk_rep")
+                    risk_factors["exit"] = st.slider("🚪 Risque de sortie", -2, 2, 0, key="risk_exit")
+                
+                if st.button("Calculer Risk Factor", key="calc_risk"):
+                    risk_result = ValuationCalculator.risk_factor_summation(risk_base_val, risk_factors)
+                    valuations["Risk Factor"] = risk_result["valuation"]
+                    detailed_results["Risk Factor"] = risk_result
+                    
+                    st.success(f"**Valorisation ajustée: {risk_result['valuation']:,.0f} €**")
+                    st.info(f"Ajustement total: {risk_result['total_adjustment']*100:+.1f}%")
+                    
+                    # Graphique des ajustements de risque
+                    risk_names = [analysis['name'] for analysis in risk_result['risk_analysis'].values()]
+                    risk_adjustments = [analysis['adjustment']*100 for analysis in risk_result['risk_analysis'].values()]
+                    
+                    colors_risk = ['red' if x < 0 else 'green' if x > 0 else 'gray' for x in risk_adjustments]
+                    
+                    fig_risk = go.Figure(data=[
+                        go.Bar(x=risk_names, y=risk_adjustments, marker_color=colors_risk)
+                    ])
+                    fig_risk.update_layout(
+                        title="Impact des facteurs de risque (%)",
+                        xaxis_title="Facteurs de risque",
+                        yaxis_title="Ajustement (%)"
+                    )
+                    st.plotly_chart(fig_risk, use_container_width=True)
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+            
+            # Venture Capital Method
+            if methods["VC Method"]:
+                st.markdown('<div class="method-card">', unsafe_allow_html=True)
+                st.subheader("🏦 Venture Capital Method")
+                
+                vc_col1, vc_col2 = st.columns(2)
+                
+                with vc_col1:
+                    expected_revenue = st.number_input("Revenus attendus à la sortie (€)", min_value=0, value=10000000, key="vc_revenue")
+                    exit_multiple = st.number_input("Multiple de sortie", min_value=0.1, value=5.0, key="vc_multiple")
+                    required_return = st.slider("Retour annuel requis (%)", 15.0, 50.0, 25.0, key="vc_return") / 100
+                
+                with vc_col2:
+                    years_to_exit = st.number_input("Années jusqu'à la sortie", min_value=1, max_value=10, value=5, key="vc_years")
+                    investment_needed = st.number_input("Investissement nécessaire (€)", min_value=0, value=2000000, key="vc_investment")
+                
+                if st.button("Calculer VC Method", key="calc_vc"):
+                    vc_result = ValuationCalculator.venture_capital_method(
+                        expected_revenue, exit_multiple, required_return, years_to_exit, investment_needed
+                    )
+                    valuations["VC Method"] = vc_result.get("pre_money_valuation", vc_result["present_value"])
+                    detailed_results["VC Method"] = vc_result
+                    
+                    st.success(f"**Valorisation pré-money: {vc_result.get('pre_money_valuation', vc_result['present_value']):,.0f} €**")
+                    
+                    # Métriques VC
+                    vc_metrics_col1, vc_metrics_col2 = st.columns(2)
+                    with vc_metrics_col1:
+                        st.metric("Valeur à la sortie", f"{vc_result['exit_value']:,.0f} €")
+                        st.metric("Multiple de retour", f"{vc_result['expected_return_multiple']:.1f}x")
+                    
+                    with vc_metrics_col2:
+                        if 'ownership_percentage' in vc_result:
+                            st.metric("Part nécessaire", f"{vc_result['ownership_percentage']*100:.1f}%")
+                        st.metric("Retour annualisé", f"{vc_result['annualized_return']*100:.1f}%")
+                
+                st.markdown('</div>', unsafe_allow_html=True)
+        
+        # Sidebar des résultats
+        with col2:
+            if valuations:
+                st.subheader("📈 Résultats Actuels")
+                
+                for method, value in valuations.items():
+                    st.markdown(f"""
+                    <div class="metric-card">
+                        <h4>{method}</h4>
+                        <h3>{value:,.0f} €</h3>
+                    </div>
+                    """, unsafe_allow_html=True)
+                
+                # Statistiques résumées
+                if len(valuations) > 1:
+                    values = list(valuations.values())
+                    st.markdown("### 📊 Statistiques")
+                    st.metric("Moyenne", f"{np.mean(values):,.0f} €")
+                    st.metric("Médiane", f"{np.median(values):,.0f} €")
+                    st.metric("Écart-type", f"{np.std(values):,.0f} €")
+                    st.metric("Min - Max", f"{min(values):,.0f} € - {max(values):,.0f} €")
+    
+    with tab2:
+        st.header("📈 Analyse Comparative")
+        
+        if len(valuations) >= 2:
+            # Graphique de comparaison
+            fig_comparison = create_comparison_chart(valuations)
+            st.plotly_chart(fig_comparison, use_container_width=True)
+            
+            # Analyse statistique
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.subheader("📊 Statistiques Descriptives")
+                values = list(valuations.values())
+                stats_df = pd.DataFrame({
+                    'Métrique': ['Moyenne', 'Médiane', 'Écart-type', 'Minimum', 'Maximum', 'Coefficient de variation'],
+                    'Valeur': [
+                        f"{np.mean(values):,.0f} €",
+                        f"{np.median(values):,.0f} €",
+                        f"{np.std(values):,.0f} €",
+                        f"{min(values):,.0f} €",
+                        f"{max(values):,.0f} €",
+                        f"{np.std(values)/np.mean(values)*100:.1f}%"
+                    ]
+                })
+                st.dataframe(stats_df, hide_index=True)
+            
+            with col2:
+                st.subheader("🎯 Recommandations")
+                cv = np.std(values) / np.mean(values)
+                
+                if cv < 0.3:
+                    st.success("✅ **Convergence forte** - Les méthodes donnent des résultats cohérents")
+                elif cv < 0.6:
+                    st.warning("⚠️ **Convergence modérée** - Variabilité acceptable entre les méthodes")
+                else:
+                    st.error("❌ **Forte divergence** - Revoir les hypothèses ou se concentrer sur les méthodes les plus pertinentes")
+                
+                # Fourchette de valorisation recommandée
+                percentile_25 = np.percentile(values, 25)
+                percentile_75 = np.percentile(values, 75)
+                st.info(f"**Fourchette recommandée:** {percentile_25:,.0f} € - {percentile_75:,.0f} €")
+        else:
+            st.info("Calculez au moins 2 méthodes de valorisation pour voir l'analyse comparative.")
+    
+    with tab3:
+        st.header("📋 Rapport de Valorisation")
+        
+        if valuations:
+            # Génération du rapport PDF
+            col1, col2 = st.columns([3, 1])
+            
+            with col1:
+                st.subheader("Résumé du Rapport")
+                
+                # Tableau des résultats
+                results_df = pd.DataFrame([
+                    {'Méthode': method, 'Valorisation (€)': f"{value:,.0f}", 'Valorisation': value}
+                    for method, value in valuations.items()
+                ])
+                
+                st.dataframe(results_df[['Méthode', 'Valorisation (€)']], hide_index=True)
+                
+                # Synthèse
+                values = list(valuations.values())
+                st.markdown(f"""
+                ### 🎯 Synthèse Exécutive
+                
+                **Entreprise:** {company_name}  
+                **Secteur:** {company_sector}  
+                **Date d'évaluation:** {datetime.now().strftime('%d/%m/%Y')}
+                
+                **Fourchette de valorisation:** {min(values):,.0f} € - {max(values):,.0f} €  
+                **Valorisation médiane:** {np.median(values):,.0f} €  
+                **Nombre de méthodes utilisées:** {len(valuations)}
+                """)
+            
+            with col2:
+                # Bouton de téléchargement PDF
+                if st.button("📥 Générer Rapport PDF", type="primary"):
+                    pdf_buffer = generate_pdf_report(valuations, company_name)
+                    
+                    st.download_button(
+                        label="⬇️ Télécharger PDF",
+                        data=pdf_buffer,
+                        file_name=f"rapport_valorisation_{company_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf",
+                        mime="application/pdf"
+                    )
+        else:
+            st.info("Aucune valorisation calculée. Retournez à l'onglet 'Calculs' pour commencer.")
+    
+    with tab4:
+        st.header("ℹ️ Guide d'Utilisation")
+        
+        st.markdown("""
+        ## 🎯 Comment utiliser ce calculateur
+        
+        ### 1. Configuration initiale
+        - Renseignez le nom de votre startup et son secteur d'activité
+        - Sélectionnez les méthodes de valorisation pertinentes pour votre situation
+        
+        ### 2. Choix des méthodes
+        
+        **Pour les startups avec revenus :**
+        - ✅ DCF (si flux de trésorerie prévisibles)
+        - ✅ Multiples de marché
+        - ✅ Scorecard Method
+        
+        **Pour les startups pré-revenus :**
+        - ✅ Berkus Method
+        - ✅ Scorecard Method
+        - ✅ Risk Factor Summation
+        
+        **Pour les levées de fonds :**
+        - ✅ Venture Capital Method
+        - ✅ DCF
+        
+        ### 3. Interprétation des résultats
+        
+        #### 🟢 Convergence forte (CV < 30%)
+        Les méthodes donnent des résultats similaires → Valorisation fiable
+        
+        #### 🟡 Convergence modérée (CV 30-60%)
+        Variabilité acceptable → Utiliser une fourchette
+        
+        #### 🔴 Forte divergence (CV > 60%)
+        Revoir les hypothèses ou se concentrer sur les méthodes les plus adaptées
+        
+        ### 4. Limites et précautions
+        
+        ⚠️ **Important :** Ces calculs sont indicatifs uniquement
+        - La valorisation dépend de nombreux facteurs qualitatifs
+        - Le contexte de marché influence fortement les résultats
+        - Consultez des experts pour des décisions importantes
+        
+        ### 5. Sources et références
+        
+        - **DCF :** Damodaran, Aswath. "Investment Valuation"
+        - **Multiples :** PwC Money Tree Reports, CB Insights
+        - **Berkus Method :** Dave Berkus, "Basic Angel Investing"
+        - **Scorecard :** Bill Payne, Angel Capital Association
+        """)
+
+if __name__ == "__main__":
+    main()
