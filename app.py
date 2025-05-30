@@ -1,5 +1,5 @@
 """
-Startup Valuation Calculator - Version Complète
+Startup Valuation Calculator
 Application Streamlit pour calculer la valorisation d'une startup selon plusieurs méthodes
 """
 
@@ -473,6 +473,34 @@ def generate_pdf_report(valuations_dict, company_name="Ma Startup"):
     buffer.seek(0)
     return buffer
 
+def save_result(method_name, result):
+    """Fonction pour sauvegarder les résultats de manière fiable"""
+    if 'valuations' not in st.session_state:
+        st.session_state.valuations = {}
+    if 'detailed_results' not in st.session_state:
+        st.session_state.detailed_results = {}
+    
+    # Extraction de la valorisation selon le type de résultat
+    if isinstance(result, dict):
+        if method_name == "VC Method":
+            valuation = result.get('pre_money_valuation', result.get('present_value', 0))
+        else:
+            valuation = result.get('valuation', 0)
+    else:
+        valuation = result
+    
+    st.session_state.valuations[method_name] = valuation
+    st.session_state.detailed_results[method_name] = result
+    
+    return valuation
+
+def delete_result(method_name):
+    """Fonction pour supprimer un résultat sauvegardé"""
+    if method_name in st.session_state.valuations:
+        del st.session_state.valuations[method_name]
+    if method_name in st.session_state.detailed_results:
+        del st.session_state.detailed_results[method_name]
+
 def show_saved_result(method_name, valuation):
     """Afficher un résultat sauvegardé avec style"""
     st.markdown(f"""
@@ -484,7 +512,7 @@ def show_saved_result(method_name, valuation):
 def main():
     """Application principale"""
     
-    # Initialisation du session state
+    # Initialisation du session state de manière plus robuste
     if 'valuations' not in st.session_state:
         st.session_state.valuations = {}
     if 'detailed_results' not in st.session_state:
@@ -493,6 +521,8 @@ def main():
         st.session_state.company_name = "Ma Startup"
     if 'company_sector' not in st.session_state:
         st.session_state.company_sector = "Technologie"
+    if 'current_calculations' not in st.session_state:
+        st.session_state.current_calculations = {}
     
     # En-tête
     st.markdown('<h1 class="main-header">🚀 Startup Valuation Calculator</h1>', unsafe_allow_html=True)
@@ -534,6 +564,7 @@ def main():
     if st.sidebar.button("Effacer tous les résultats", type="secondary"):
         st.session_state.valuations = {}
         st.session_state.detailed_results = {}
+        st.session_state.current_calculations = {}
         st.rerun()
     
     # Affichage des résultats sauvegardés dans la sidebar
@@ -545,9 +576,7 @@ def main():
                 st.write(f"**{method}:** {value:,.0f} €")
             with col2:
                 if st.button("🗑️", key=f"delete_{method}", help=f"Supprimer {method}"):
-                    del st.session_state.valuations[method]
-                    if method in st.session_state.detailed_results:
-                        del st.session_state.detailed_results[method]
+                    delete_result(method)
                     st.rerun()
     
     # Interface principale avec tabs
@@ -557,10 +586,6 @@ def main():
         col1, col2 = st.columns([2, 1])
         
         with col1:
-            # Variable temporaire pour stocker les résultats du calcul actuel
-            current_result = None
-            current_method = None
-            
             # DCF Method
             if methods["DCF"]:
                 st.markdown('<div class="method-card">', unsafe_allow_html=True)
@@ -586,8 +611,7 @@ def main():
                 with dcf_button_col1:
                     if st.button("🧮 Calculer DCF", key="calc_dcf", type="primary"):
                         dcf_result = ValuationCalculator.dcf_valuation(cash_flows, 0.1, discount_rate, terminal_growth)
-                        current_result = dcf_result
-                        current_method = "DCF"
+                        st.session_state.current_calculations["DCF"] = dcf_result
                         st.success(f"**Valorisation DCF: {dcf_result['valuation']:,.0f} €**")
                         
                         # Graphique DCF
@@ -595,18 +619,19 @@ def main():
                         st.plotly_chart(fig_dcf, use_container_width=True)
                 
                 with dcf_button_col2:
-                    if st.button("💾 Sauvegarder", key="save_dcf", disabled=(current_result is None and current_method != "DCF")):
-                        if current_result and current_method == "DCF":
-                            st.session_state.valuations["DCF"] = current_result["valuation"]
-                            st.session_state.detailed_results["DCF"] = current_result
+                    if st.button("💾 Sauvegarder", key="save_dcf"):
+                        if "DCF" in st.session_state.current_calculations:
+                            result = st.session_state.current_calculations["DCF"]
+                            save_result("DCF", result)
                             st.success("✅ DCF sauvegardé!")
                             st.rerun()
+                        else:
+                            st.error("Calculez d'abord la valorisation DCF")
                 
                 with dcf_button_col3:
-                    if st.button("🗑️ Effacer", key="clear_dcf", disabled=("DCF" not in st.session_state.valuations)):
+                    if st.button("🗑️ Effacer", key="clear_dcf"):
                         if "DCF" in st.session_state.valuations:
-                            del st.session_state.valuations["DCF"]
-                            del st.session_state.detailed_results["DCF"]
+                            delete_result("DCF")
                             st.success("🗑️ DCF effacé!")
                             st.rerun()
                 
@@ -638,23 +663,23 @@ def main():
                 with mult_button_col1:
                     if st.button("🧮 Calculer Multiples", key="calc_mult", type="primary"):
                         mult_result = ValuationCalculator.market_multiples_valuation(metric_value, multiple, metric_type)
-                        current_result = mult_result
-                        current_method = "Multiples"
+                        st.session_state.current_calculations["Multiples"] = mult_result
                         st.success(f"**Valorisation par Multiples: {mult_result['valuation']:,.0f} €**")
                 
                 with mult_button_col2:
-                    if st.button("💾 Sauvegarder", key="save_mult", disabled=(current_result is None and current_method != "Multiples")):
-                        if current_result and current_method == "Multiples":
-                            st.session_state.valuations["Multiples"] = current_result["valuation"]
-                            st.session_state.detailed_results["Multiples"] = current_result
+                    if st.button("💾 Sauvegarder", key="save_mult"):
+                        if "Multiples" in st.session_state.current_calculations:
+                            result = st.session_state.current_calculations["Multiples"]
+                            save_result("Multiples", result)
                             st.success("✅ Multiples sauvegardé!")
                             st.rerun()
+                        else:
+                            st.error("Calculez d'abord la valorisation par Multiples")
                 
                 with mult_button_col3:
-                    if st.button("🗑️ Effacer", key="clear_mult", disabled=("Multiples" not in st.session_state.valuations)):
+                    if st.button("🗑️ Effacer", key="clear_mult"):
                         if "Multiples" in st.session_state.valuations:
-                            del st.session_state.valuations["Multiples"]
-                            del st.session_state.detailed_results["Multiples"]
+                            delete_result("Multiples")
                             st.success("🗑️ Multiples effacé!")
                             st.rerun()
                 
@@ -705,8 +730,7 @@ def main():
                 with score_button_col1:
                     if st.button("🧮 Calculer Scorecard", key="calc_scorecard", type="primary"):
                         scorecard_result = ValuationCalculator.scorecard_valuation(base_valuation, criteria_scores, weights)
-                        current_result = scorecard_result
-                        current_method = "Scorecard"
+                        st.session_state.current_calculations["Scorecard"] = scorecard_result
                         st.success(f"**Valorisation Scorecard: {scorecard_result['valuation']:,.0f} €**")
                         st.info(f"Facteur d'ajustement: {scorecard_result['adjustment_factor']:.2f}")
                         
@@ -728,18 +752,19 @@ def main():
                         st.plotly_chart(fig_scorecard, use_container_width=True)
                 
                 with score_button_col2:
-                    if st.button("💾 Sauvegarder", key="save_scorecard", disabled=(current_result is None and current_method != "Scorecard")):
-                        if current_result and current_method == "Scorecard":
-                            st.session_state.valuations["Scorecard"] = current_result["valuation"]
-                            st.session_state.detailed_results["Scorecard"] = current_result
+                    if st.button("💾 Sauvegarder", key="save_scorecard"):
+                        if "Scorecard" in st.session_state.current_calculations:
+                            result = st.session_state.current_calculations["Scorecard"]
+                            save_result("Scorecard", result)
                             st.success("✅ Scorecard sauvegardé!")
                             st.rerun()
+                        else:
+                            st.error("Calculez d'abord la valorisation Scorecard")
                 
                 with score_button_col3:
-                    if st.button("🗑️ Effacer", key="clear_scorecard", disabled=("Scorecard" not in st.session_state.valuations)):
+                    if st.button("🗑️ Effacer", key="clear_scorecard"):
                         if "Scorecard" in st.session_state.valuations:
-                            del st.session_state.valuations["Scorecard"]
-                            del st.session_state.detailed_results["Scorecard"]
+                            delete_result("Scorecard")
                             st.success("🗑️ Scorecard effacé!")
                             st.rerun()
                 
@@ -773,8 +798,7 @@ def main():
                 with berkus_button_col1:
                     if st.button("🧮 Calculer Berkus", key="calc_berkus", type="primary"):
                         berkus_result = ValuationCalculator.berkus_valuation(berkus_scores)
-                        current_result = berkus_result
-                        current_method = "Berkus"
+                        st.session_state.current_calculations["Berkus"] = berkus_result
                         st.success(f"**Valorisation Berkus: {berkus_result['valuation']:,.0f} €**")
                         st.info(f"Potentiel maximum: {berkus_result['max_possible']:,.0f} €")
                         
@@ -793,18 +817,19 @@ def main():
                         st.plotly_chart(fig_berkus, use_container_width=True)
                 
                 with berkus_button_col2:
-                    if st.button("💾 Sauvegarder", key="save_berkus", disabled=(current_result is None and current_method != "Berkus")):
-                        if current_result and current_method == "Berkus":
-                            st.session_state.valuations["Berkus"] = current_result["valuation"]
-                            st.session_state.detailed_results["Berkus"] = current_result
+                    if st.button("💾 Sauvegarder", key="save_berkus"):
+                        if "Berkus" in st.session_state.current_calculations:
+                            result = st.session_state.current_calculations["Berkus"]
+                            save_result("Berkus", result)
                             st.success("✅ Berkus sauvegardé!")
                             st.rerun()
+                        else:
+                            st.error("Calculez d'abord la valorisation Berkus")
                 
                 with berkus_button_col3:
-                    if st.button("🗑️ Effacer", key="clear_berkus", disabled=("Berkus" not in st.session_state.valuations)):
+                    if st.button("🗑️ Effacer", key="clear_berkus"):
                         if "Berkus" in st.session_state.valuations:
-                            del st.session_state.valuations["Berkus"]
-                            del st.session_state.detailed_results["Berkus"]
+                            delete_result("Berkus")
                             st.success("🗑️ Berkus effacé!")
                             st.rerun()
                 
@@ -848,8 +873,7 @@ def main():
                 with risk_button_col1:
                     if st.button("🧮 Calculer Risk Factor", key="calc_risk", type="primary"):
                         risk_result = ValuationCalculator.risk_factor_summation(risk_base_val, risk_factors)
-                        current_result = risk_result
-                        current_method = "Risk Factor"
+                        st.session_state.current_calculations["Risk Factor"] = risk_result
                         st.success(f"**Valorisation ajustée: {risk_result['valuation']:,.0f} €**")
                         st.info(f"Ajustement total: {risk_result['total_adjustment']*100:+.1f}%")
                         
@@ -870,18 +894,19 @@ def main():
                         st.plotly_chart(fig_risk, use_container_width=True)
                 
                 with risk_button_col2:
-                    if st.button("💾 Sauvegarder", key="save_risk", disabled=(current_result is None and current_method != "Risk Factor")):
-                        if current_result and current_method == "Risk Factor":
-                            st.session_state.valuations["Risk Factor"] = current_result["valuation"]
-                            st.session_state.detailed_results["Risk Factor"] = current_result
+                    if st.button("💾 Sauvegarder", key="save_risk"):
+                        if "Risk Factor" in st.session_state.current_calculations:
+                            result = st.session_state.current_calculations["Risk Factor"]
+                            save_result("Risk Factor", result)
                             st.success("✅ Risk Factor sauvegardé!")
                             st.rerun()
+                        else:
+                            st.error("Calculez d'abord la valorisation Risk Factor")
                 
                 with risk_button_col3:
-                    if st.button("🗑️ Effacer", key="clear_risk", disabled=("Risk Factor" not in st.session_state.valuations)):
+                    if st.button("🗑️ Effacer", key="clear_risk"):
                         if "Risk Factor" in st.session_state.valuations:
-                            del st.session_state.valuations["Risk Factor"]
-                            del st.session_state.detailed_results["Risk Factor"]
+                            delete_result("Risk Factor")
                             st.success("🗑️ Risk Factor effacé!")
                             st.rerun()
                 
@@ -915,8 +940,7 @@ def main():
                         vc_result = ValuationCalculator.venture_capital_method(
                             expected_revenue, exit_multiple, required_return, years_to_exit, investment_needed
                         )
-                        current_result = vc_result
-                        current_method = "VC Method"
+                        st.session_state.current_calculations["VC Method"] = vc_result
                         st.success(f"**Valorisation pré-money: {vc_result.get('pre_money_valuation', vc_result['present_value']):,.0f} €**")
                         
                         # Métriques VC
@@ -931,18 +955,19 @@ def main():
                             st.metric("Retour annualisé", f"{vc_result['annualized_return']*100:.1f}%")
                 
                 with vc_button_col2:
-                    if st.button("💾 Sauvegarder", key="save_vc", disabled=(current_result is None and current_method != "VC Method")):
-                        if current_result and current_method == "VC Method":
-                            st.session_state.valuations["VC Method"] = current_result.get("pre_money_valuation", current_result["present_value"])
-                            st.session_state.detailed_results["VC Method"] = current_result
+                    if st.button("💾 Sauvegarder", key="save_vc"):
+                        if "VC Method" in st.session_state.current_calculations:
+                            result = st.session_state.current_calculations["VC Method"]
+                            save_result("VC Method", result)
                             st.success("✅ VC Method sauvegardé!")
                             st.rerun()
+                        else:
+                            st.error("Calculez d'abord la valorisation VC Method")
                 
                 with vc_button_col3:
-                    if st.button("🗑️ Effacer", key="clear_vc", disabled=("VC Method" not in st.session_state.valuations)):
+                    if st.button("🗑️ Effacer", key="clear_vc"):
                         if "VC Method" in st.session_state.valuations:
-                            del st.session_state.valuations["VC Method"]
-                            del st.session_state.detailed_results["VC Method"]
+                            delete_result("VC Method")
                             st.success("🗑️ VC Method effacé!")
                             st.rerun()
                 
@@ -973,6 +998,8 @@ def main():
                     st.metric("Médiane", f"{np.median(values):,.0f} €")
                     st.metric("Écart-type", f"{np.std(values):,.0f} €")
                     st.metric("Min - Max", f"{min(values):,.0f} € - {max(values):,.0f} €")
+            else:
+                st.info("Calculez et sauvegardez des résultats pour voir l'analyse comparative")
     
     with tab2:
         st.header("📈 Analyse Comparative")
@@ -1017,7 +1044,11 @@ def main():
                 percentile_75 = np.percentile(values, 75)
                 st.info(f"**Fourchette recommandée:** {percentile_25:,.0f} € - {percentile_75:,.0f} €")
         else:
-            st.info("Calculez au moins 2 méthodes de valorisation pour voir l'analyse comparative.")
+            st.info("💡 Calculez et sauvegardez au moins 2 méthodes de valorisation pour voir l'analyse comparative.")
+            if st.session_state.valuations:
+                st.write("**Résultats disponibles:**")
+                for method, value in st.session_state.valuations.items():
+                    st.write(f"- {method}: {value:,.0f} €")
     
     with tab3:
         st.header("📋 Rapport de Valorisation")
@@ -1054,16 +1085,29 @@ def main():
             with col2:
                 # Bouton de téléchargement PDF
                 if st.button("📥 Générer Rapport PDF", type="primary"):
-                    pdf_buffer = generate_pdf_report(st.session_state.valuations, st.session_state.company_name)
-                    
-                    st.download_button(
-                        label="⬇️ Télécharger PDF",
-                        data=pdf_buffer,
-                        file_name=f"rapport_valorisation_{st.session_state.company_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf",
-                        mime="application/pdf"
-                    )
+                    try:
+                        pdf_buffer = generate_pdf_report(st.session_state.valuations, st.session_state.company_name)
+                        
+                        st.download_button(
+                            label="⬇️ Télécharger PDF",
+                            data=pdf_buffer,
+                            file_name=f"rapport_valorisation_{st.session_state.company_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d')}.pdf",
+                            mime="application/pdf"
+                        )
+                        st.success("✅ Rapport PDF généré avec succès!")
+                    except Exception as e:
+                        st.error(f"❌ Erreur lors de la génération du PDF: {str(e)}")
         else:
-            st.info("Aucune valorisation calculée. Retournez à l'onglet 'Calculs' pour commencer.")
+            st.info("📊 Aucune valorisation calculée. Retournez à l'onglet 'Calculs' pour commencer.")
+            st.markdown("""
+            ### Comment procéder:
+            1. Retournez à l'onglet **📊 Calculs**
+            2. Sélectionnez une ou plusieurs méthodes de valorisation
+            3. Remplissez les paramètres requis
+            4. Cliquez sur **🧮 Calculer** puis **💾 Sauvegarder**
+            5. Répétez pour d'autres méthodes
+            6. Revenez ici pour générer votre rapport
+            """)
     
     with tab4:
         st.header("ℹ️ Guide d'Utilisation")
@@ -1091,18 +1135,35 @@ def main():
         - ✅ Venture Capital Method
         - ✅ DCF
         
-        ### 3. Gestion des résultats
+        ### 3. Flux de travail recommandé
+        
+        **Étape 1:** Configuration
+        - Configurez le nom et secteur dans la sidebar
+        - Cochez les méthodes pertinentes
+        
+        **Étape 2:** Calculs
+        - Pour chaque méthode sélectionnée:
+          1. Remplissez les paramètres requis
+          2. Cliquez sur **🧮 Calculer**
+          3. Vérifiez les résultats et graphiques
+          4. Cliquez sur **💾 Sauvegarder** pour conserver le résultat
+        
+        **Étape 3:** Analyse
+        - Consultez l'onglet **📈 Comparaison** pour analyser les écarts
+        - Générez le rapport PDF dans l'onglet **📋 Rapport**
+        
+        ### 4. Gestion des résultats
         
         **Boutons de contrôle pour chaque méthode :**
         - 🧮 **Calculer** : Lance le calcul avec les paramètres actuels
-        - 💾 **Sauvegarder** : Enregistre le résultat pour la comparaison
-        - 🗑️ **Effacer** : Supprime le résultat sauvegardé
+        - 💾 **Sauvegarder** : Enregistre le résultat pour la comparaison (requis!)
+        - 🗑️ **Effacer** : Supprime le résultat sauvegardé de cette méthode
         
-        **Contrôle global :**
-        - 🗑️ **Effacer tous les résultats** : Reset complet dans la sidebar
-        - 🗑️ Boutons individuels dans la sidebar pour supprimer chaque méthode
+        **Contrôle global dans la sidebar :**
+        - 🗑️ **Effacer tous les résultats** : Reset complet
+        - 🗑️ Boutons individuels pour supprimer chaque méthode sauvegardée
         
-        ### 4. Interprétation des résultats
+        ### 5. Interprétation des résultats
         
         #### 🟢 Convergence forte (CV < 30%)
         Les méthodes donnent des résultats similaires → Valorisation fiable
@@ -1113,19 +1174,53 @@ def main():
         #### 🔴 Forte divergence (CV > 60%)
         Revoir les hypothèses ou se concentrer sur les méthodes les plus adaptées
         
-        ### 5. Limites et précautions
+        ### 6. Limites et précautions
         
         ⚠️ **Important :** Ces calculs sont indicatifs uniquement
         - La valorisation dépend de nombreux facteurs qualitatifs
         - Le contexte de marché influence fortement les résultats
         - Consultez des experts pour des décisions importantes
         
-        ### 6. Sources et références
+        ### 7. Résolution des problèmes courants
+        
+        **Problème:** Le bouton "Sauvegarder" ne fonctionne pas
+        - **Solution:** Assurez-vous d'avoir d'abord cliqué sur "🧮 Calculer"
+        
+        **Problème:** Pas de graphique de comparaison
+        - **Solution:** Sauvegardez au moins 2 méthodes de valorisation
+        
+        **Problème:** Impossible de générer le PDF
+        - **Solution:** Vérifiez qu'au moins une méthode est sauvegardée
+        
+        **Problème:** Les pondérations ne totalisent pas 100%
+        - **Solution:** Ajustez les sliders pour que la somme soit exactement 100%
+        
+        ### 8. Conseils d'utilisation avancée
+        
+        **Analyse de sensibilité:**
+        - Testez différents scénarios en modifiant les paramètres
+        - Comparez les résultats pour identifier les variables critiques
+        
+        **Choix des méthodes selon le contexte:**
+        - **Startup tech avec traction:** DCF + Multiples + VC Method
+        - **Startup pré-revenus:** Berkus + Scorecard + Risk Factor
+        - **Levée de fonds série A:** DCF + VC Method + Multiples
+        
+        ### 9. Sources et références
         
         - **DCF :** Damodaran, Aswath. "Investment Valuation"
         - **Multiples :** PwC Money Tree Reports, CB Insights
         - **Berkus Method :** Dave Berkus, "Basic Angel Investing"
         - **Scorecard :** Bill Payne, Angel Capital Association
+        - **Risk Factor :** Various VC and Angel methodologies
+        - **VC Method :** Venture Capital industry standard practices
+        
+        ### 10. Support et améliorations
+        
+        Cette application est en développement continu. Pour signaler des bugs ou suggérer des améliorations:
+        - Vérifiez d'abord ce guide de dépannage
+        - Documentez précisément les étapes qui posent problème
+        - Proposez des améliorations sur le repository GitHub
         """)
 
 if __name__ == "__main__":
